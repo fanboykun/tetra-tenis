@@ -4,11 +4,12 @@
 	import Menu from '$lib/components/Menu.svelte';
 	import GameInfo from '$lib/components/GameInfo.svelte';
 	import GameBoard from '$lib/components/GameBoard.svelte';
+	import CellGameBoard from '$lib/components/CellGameBoard.svelte';
 
 	let tetris: Tetris | null = null;
 	onMount(() => {
-		tetris = new Tetris();
-		tetris.start();
+		// tetris = new Tetris();
+		// tetris.start();
 	});
 
 	function handleKeyDown(event: KeyboardEvent) {
@@ -27,7 +28,8 @@
 <section>
 	<div id="page-wrapper" class="flex flex-row h-[100svh] w-screen ">
 		<Menu />
-		<GameBoard />
+		<CellGameBoard />
+		<!-- <GameBoard /> -->
 		<GameInfo />
 	</div>
 </section>
