@@ -24,6 +24,7 @@ export class Cell
         this.element.style.width = `${this.size}px`
         this.element.style.height = `${this.size}px`
         this.element.style.position = "absolute"
+        // this.element.className += "transition-all duration-50 linear"
 
         this.element.style.top = `${ (this.yPosition - 1)  * this.size}px`
         if(this.xPosition != 1) {

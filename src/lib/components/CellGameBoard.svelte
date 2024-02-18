@@ -1,4 +1,5 @@
 <script lang="ts">
+    
     import { Cell, cells } from "$lib/functions/Cell";
 	import { onMount } from "svelte";
     type BOXMAP = { x: number[], y: number[] }
@@ -10,7 +11,6 @@
         y: [ 10, 11 ]
     }
 
-
     const amountXCell = 10
     const amountYCell = 10
 
@@ -19,7 +19,6 @@
     let objectXDirection = 0   // assume the object is from left
     let currentXPosition = objectXDirection // hold the old x position
     let moveXDirection: "LEFT" | "RIGHT" | null = null
-    let calculatingNext = false
 
     onMount( async () => {
         for( let j = 1; j <= amountXCell; j++ ) {
@@ -28,14 +27,14 @@
                 cells.update((v) => [...v, cell])
             }
         }
+        watchKey()
         return await start()
     })
 
     async function start(): Promise<void> {
-        watchKey()
         let step = 1;
         let shouldStartOver = false
-        const MovementInterval = setInterval( async () => {
+        const play = async () => {
             if(shouldBreak) {
                 clearInterval(MovementInterval)
                 return
@@ -57,9 +56,14 @@
                 boxMap = {...resetBoxMap}
                 currentXPosition = 0
                 moveXDirection = null
-                start()
+
+                requestAnimationFrame(start)
             }
-        }, 350)
+        }
+        // const MovementInterval = setInterval( play, 250)
+        const MovementInterval = setInterval( () => {
+            requestAnimationFrame(play)
+        }, 250)
     }
 
     async function move(boxMap: BOXMAP, oldBoxMap?: BOXMAP ) : Promise<void> {
