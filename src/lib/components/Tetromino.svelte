@@ -2,7 +2,6 @@
 	import { onMount } from "svelte";
 	import type { Colors, Matrix, Playfield, Tetromino, TetrominosList } from "$lib/types/TetrominoTypes";
 
-    // const canvas : HTMLCanvasElement|null = document.getElementById('game');
     let canvas : HTMLCanvasElement
     let context : CanvasRenderingContext2D|null
     const grid = 32;    // game board cells number
@@ -95,7 +94,6 @@
         if (tetrominoSequence.length === 0) {
             generateSequence();
         }
-
         let  name : string = ''
         if(tetrominoSequence.length != 0) {
             let n = tetrominoSequence.pop();
@@ -107,7 +105,6 @@
         if( typeof name == 'string' ) {
             matrix = tetrominos[name as keyof TetrominosList];
         }
-
         // I and O start centered, all others start in left-middle
         const col = playfield[0].length / 2 - Math.ceil(matrix[0].length / 2);
 
@@ -253,8 +250,8 @@
 
                 // place piece if it runs into anything
                 if (!isValidMove(tetromino.matrix, tetromino.row, tetromino.col)) {
-                tetromino.row--;
-                placeTetromino();
+                    tetromino.row--;
+                    placeTetromino();
                 }
             }
 
@@ -278,26 +275,25 @@
         // listen to keyboard events to move the active tetromino
         document.addEventListener('keydown', function(e) {
             if (gameOver) return;
-
+            const keyCode = e.code
             // left and right arrow keys (move)
-            if (e.which === 37 || e.which === 39) {
-                const col = e.which === 37
+            if (keyCode === "ArrowLeft" || keyCode === "ArrowRight") {
+                const col = keyCode == "ArrowLeft"
                 ? tetromino.col - 1
                 : tetromino.col + 1;
-
                 if (isValidMove(tetromino.matrix, tetromino.row, col)) { 
                     tetromino.col = col;
                 }
             }
 
             // up arrow key (rotate)
-            if (e.which === 38) {
+            if (keyCode === "ArrowUp") {
                 const matrix = rotate(tetromino.matrix);
                 if (isValidMove(matrix, tetromino.row, tetromino.col)) tetromino.matrix = matrix;
             }
 
             // down arrow key (drop)
-            if(e.which === 40) {
+            if(keyCode === "ArrowDown") {
                 const row = tetromino.row + 1;
                 if (!isValidMove(tetromino.matrix, row, tetromino.col)) {
                     tetromino.row = row - 1;
@@ -311,14 +307,11 @@
 
     }
 
-
-
 </script>
 
-<canvas width="320" height="640" bind:this={canvas}></canvas>
-
-<style>
-    canvas {
-      border: 1px solid white;
-    }
-</style>
+<canvas 
+    width="320" 
+    height="640" 
+    class="border-2 border-white scale-95"
+    bind:this={canvas}>
+</canvas>
