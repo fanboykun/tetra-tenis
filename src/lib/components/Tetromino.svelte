@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import type { Colors, Matrix, Playfield, Tetromino, TetrominosList } from "$lib/types/TetrominoTypes";
+	import GameStateButton from "./GameStateButton.svelte";
 
     let canvas : HTMLCanvasElement
     let context : CanvasRenderingContext2D|null
@@ -9,7 +10,7 @@
 
     // keep track of what is in every cell of the game using a 2d array
     // tetris playfield is 10x20, with a few rows offscreen
-    const playfield: Playfield = populatePlayfield()
+    let playfield: Playfield = populatePlayfield()
 
     // how to draw each tetromino
     // @see https://tetris.fandom.com/wiki/SRS
@@ -66,14 +67,16 @@
     let tetromino: Tetromino = getNextTetromino();
     let rAF : number = 0;  // keep track of the animation frame so we can cancel it
     let gameOver = false; 
+    let score: number = 0
 
+    let controls : "PLAY" | "PAUSE" | "START OVER" = "PLAY"
+    let hasPlayed = false
+    let shouldPlay = false
+
+    let bca : HTMLSpanElement|null
 
     onMount( async() => {
         if(canvas) context = canvas.getContext('2d');
-        listens()
-        // start the game
-        rAF = requestAnimationFrame(loop);
-
     })
 
     // populate the empty state of the playfield
@@ -152,62 +155,63 @@
 
     // check to see if the new matrix/row/col is valid
     function isValidMove(matrix : Matrix, cellRow : number, cellCol : number) : boolean {
-    for (let row = 0; row < matrix.length; row++) {
-        for (let col = 0; col < matrix[row].length; col++) {
-        if (matrix[row][col] && (
-            // outside the game bounds
-            cellCol + col < 0 ||
-            cellCol + col >= playfield[0].length ||
-            cellRow + row >= playfield.length ||
-            // collides with another piece
-            playfield[cellRow + row][cellCol + col])
-            ) {
-            return false;
+        for (let row = 0; row < matrix.length; row++) {
+            for (let col = 0; col < matrix[row].length; col++) {
+                if (matrix[row][col] && (
+                    // outside the game bounds
+                    cellCol + col < 0 ||
+                    cellCol + col >= playfield[0].length ||
+                    cellRow + row >= playfield.length ||
+                    // collides with another piece
+                    playfield[cellRow + row][cellCol + col])
+                    ) {
+                    return false;
+                }
+            }
         }
-        }
+        return true;
     }
 
-    return true;
-    }
-
-    // place the tetromino on the playfield
+    // place the tetromino on the playfieldplaceTetromino
     function placeTetromino() : void {
-    for (let row = 0; row < tetromino.matrix.length; row++) {
-        for (let col = 0; col < tetromino.matrix[row].length; col++) {
-        if (tetromino.matrix[row][col]) {
-
-            // game over if piece has any part offscreen
-            if (tetromino.row + row < 0) {
-            return showGameOver();
-            }
-            playfield[tetromino.row + row][tetromino.col + col] = tetromino.name;
-        }
-        }
-    }
-
-    // check for line clears starting from the bottom and working our way up
-    for (let row = playfield.length - 1; row >= 0; ) {
-        if (playfield[row].every(cell => !!cell)) {
-
-        // drop every row above this one
-        for (let r = row; r >= 0; r--) {
-            for (let c = 0; c < playfield[r].length; c++) {
-            playfield[r][c] = playfield[r-1][c];
+        let combo : number = 0
+        // check for the game over
+        for (let row = 0; row < tetromino.matrix.length; row++) {
+            for (let col = 0; col < tetromino.matrix[row].length; col++) {
+                if (tetromino.matrix[row][col]) {
+                    // game over if piece has any part offscreen
+                    if (tetromino.row + row < 0) return showGameOver();
+                    playfield[tetromino.row + row][tetromino.col + col] = tetromino.name;
+                }
             }
         }
-        }
-        else {
-        row--;
-        }
-    }
 
-    tetromino = getNextTetromino();
+        // check for line clears starting from the bottom and working our way up
+        for (let row = playfield.length - 1; row >= 0; ) {
+            // check if every cell of the row is occupied (not emprty string like: '')
+            if (playfield[row].every(cell => !!cell)) {
+                // if so, drop every row above this one
+                for (let r = row; r >= 0; r--) {
+                    for (let c = 0; c < playfield[r].length; c++) {
+                        playfield[r][c] = playfield[r-1][c];
+                        combo++
+                    }
+                }
+            } else {
+                row--;
+            }
+        }
+        let point = 1 * combo
+        let newScore = score + point
+        score = newScore
+        tetromino = getNextTetromino();
     }
 
     // show the game over screen
-    function showGameOver() : void {
+    function showGameOver(shouldShowGameOver : boolean = true) : void {
         cancelAnimationFrame(rAF);
         gameOver = true;
+        if(!shouldShowGameOver) return
         if(context != null) {
             context.fillStyle = 'black';
             context.globalAlpha = 0.75;
@@ -224,6 +228,7 @@
 
     // game loop
     function loop() : void {
+        if(!shouldPlay) return
         rAF = requestAnimationFrame(loop);
         context?.clearRect(0,0,canvas.width,canvas.height);
 
@@ -262,6 +267,7 @@
             for (let row = 0; row < tetromino.matrix.length; row++) {
                 for (let col = 0; col < tetromino.matrix[row].length; col++) {
                     if (tetromino.matrix[row][col]) {
+                        // console.log((tetromino.col + col), (tetromino.row + row))
                         // drawing 1 px smaller than the grid creates a grid effect
                         context?.fillRect((tetromino.col + col) * grid, (tetromino.row + row) * grid, grid-1, grid-1);
                     }
@@ -300,18 +306,85 @@
                     placeTetromino();
                     return;
                 }
-
+                
                 tetromino.row = row;
             }
         });
 
     }
 
-</script>
+    function changeGameState(ctrl:string|null = null) {
+        if(ctrl != null && ctrl != "START OVER") return
+        if(ctrl === "START OVER") {
+            cancelAnimationFrame(rAF)
+            if(context != null) context.clearRect(0,0,canvas.width,canvas.height);
 
-<canvas 
-    width="320" 
-    height="640" 
-    class="border-2 border-white scale-95"
-    bind:this={canvas}>
-</canvas>
+            playfield = populatePlayfield()
+            count = 0;  // ticking function
+            tetromino = getNextTetromino();
+            score = 0
+
+            hasPlayed = false
+            shouldPlay = false
+            controls = "PLAY"
+        }
+
+        if(controls === "PLAY") {
+            controls = "PAUSE"   // if the btn clicked again, then the action is pause
+            shouldPlay = true
+            if(hasPlayed) return loop()
+            play()
+        } else if(controls === "PAUSE") {
+            shouldPlay = false
+            controls = "PLAY"  // if the btn clicked again, then the action is play
+        }
+    }
+
+    const play = () => {
+        if(hasPlayed) return    // prevent from registering requestAnimationFrame over and over again
+        hasPlayed = true
+        listens()
+        // start the game
+        rAF = requestAnimationFrame(loop);
+    }
+
+    $: {
+        if(score != 0) {
+            setTimeout(() => {
+                bca?.classList.add("animate-bounce")
+                setTimeout(() => {
+                    bca?.classList.remove("animate-bounce")
+                }, 550)
+            }, 50)
+        }
+    }
+
+</script>
+<div class="flex flex-row mt-[-13px] w-full scale-90 items-start justify-around">
+    <div class="flex w-1/3 h-fit">
+        <div class="flex flex-col gap-y-8">
+            <GameStateButton click={changeGameState}>
+                {controls == "PLAY" ? "Play" : "Pause"}
+            </GameStateButton>
+            {#if hasPlayed}
+                <GameStateButton click={() => {changeGameState("START OVER")}}>
+                    Start Over
+                </GameStateButton>
+            {/if}
+        </div>
+    </div>
+    <canvas 
+        width="320" 
+        height="640" 
+        class="border-2 border-white"
+        bind:this={canvas}>
+    </canvas>
+    <div class="flex w-1/3 h-fit items-start justify-end">
+        <h3 class="text-gray-200 font-semibold px-8 py-1.5 text-center">
+                {#if hasPlayed}
+                    Score : <span bind:this={bca}> {score} </span>
+                {/if}
+        </h3>
+        <span class="hidden animate-bounce"></span>
+    </div>  
+</div>
