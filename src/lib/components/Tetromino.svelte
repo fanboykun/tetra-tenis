@@ -313,7 +313,7 @@
 
     }
 
-    function changeGameState(ctrl:string|null = null) {
+    function changeGameState(ctrl:string|null = null) : void {
         if(ctrl != null && ctrl != "START OVER") return
         if(ctrl === "START OVER") {
             cancelAnimationFrame(rAF)
@@ -354,7 +354,7 @@
                 bca?.classList.add("animate-bounce")
                 setTimeout(() => {
                     bca?.classList.remove("animate-bounce")
-                }, 550)
+                }, 1500)
             }, 50)
         }
     }
@@ -380,11 +380,15 @@
         bind:this={canvas}>
     </canvas>
     <div class="flex w-1/3 h-fit items-start justify-end">
-        <h3 class="text-gray-200 font-semibold px-8 py-1.5 text-center">
+        <h3 class="font-semibold text-lg px-8 py-1.5 text-center text-emerald-600 flex gap-x-2 underline decoration-wavy">
                 {#if hasPlayed}
-                    Score : <span bind:this={bca}> {score} </span>
+                    Score : 
+                    <h3 
+                        bind:this={bca}
+                        class="no-underline decoration-none"> 
+                        {score} 
+                    </h3>
                 {/if}
         </h3>
-        <span class="hidden animate-bounce"></span>
     </div>  
 </div>

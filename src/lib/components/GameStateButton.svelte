@@ -9,8 +9,8 @@
 
 <button
     type="button" 
-    class="flex px-8 py-1.5 items-center justify-center min-w-[155px] bg-gray-400 border-2 border-gray-200 h-fit text-center rounded-tl-md rounded-br-md text-slate-900 text-md font-semibold
-    hover:rounded-lg hover:-translate-y-0.5 hover:shadow-lg hover:shadow-gray-200 hover:text-gray-200 trasition-all duration-200"
+    class="flex px-8 py-1.5 items-center justify-center min-w-[155px] border-2 border-gray-200 h-fit text-center rounded-tl-md rounded-br-md text-md font-semibold
+    hover:rounded-lg hover:-translate-y-0.5 bg-[#202127] hover:shadow-lg hover:shadow-emerald-200 text-emerald-500 trasition-all duration-200"
     on:click={onClick}>
         <slot />
 </button>
