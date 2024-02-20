@@ -66,12 +66,14 @@
     let count = 0;  // ticking function
     let tetromino: Tetromino = getNextTetromino();
     let rAF : number = 0;  // keep track of the animation frame so we can cancel it
+    
     let gameOver = false; 
     let score: number = 0
 
     let controls : "PLAY" | "PAUSE" | "START OVER" = "PLAY"
     let hasPlayed = false
     let shouldPlay = false
+    let keyboardListened = false
 
     let bca : HTMLSpanElement|null
 
@@ -146,11 +148,11 @@
     // rotate an NxN matrix 90deg
     // @see https://codereview.stackexchange.com/a/186834
     function rotate(matrix: Matrix) : Matrix {
-    const N = matrix.length - 1;
-    const result = matrix.map((row, i) =>
-        row.map((_, j) => matrix[N - j][i])
-    );
-    return result;
+        const N = matrix.length - 1;
+        const result = matrix.map((row, i) =>
+            row.map((_, j) => matrix[N - j][i])
+        );
+        return result;
     }
 
     // check to see if the new matrix/row/col is valid
@@ -278,6 +280,7 @@
 
     // listens to keyboard event
     function listens() : void {
+        if(keyboardListened) return
         // listen to keyboard events to move the active tetromino
         document.addEventListener('keydown', function(e) {
             if (gameOver) return;
@@ -309,19 +312,23 @@
                 
                 tetromino.row = row;
             }
+            keyboardListened = true
         });
 
     }
 
+    /**  Game State( Start, Pause, Start Over) changer*/
     function changeGameState(ctrl:string|null = null) : void {
         if(ctrl != null && ctrl != "START OVER") return
         if(ctrl === "START OVER") {
             cancelAnimationFrame(rAF)
             if(context != null) context.clearRect(0,0,canvas.width,canvas.height);
-
+            rAF = 0
+            
             playfield = populatePlayfield()
-            count = 0;  // ticking function
             tetromino = getNextTetromino();
+
+            count = 0;  // ticking function
             score = 0
 
             hasPlayed = false
